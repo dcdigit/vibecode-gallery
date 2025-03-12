@@ -1,0 +1,77 @@
+---
+import Layout from "../layouts/Layout.astro";
+import fs from 'node:fs';
+import { marked } from 'marked';
+
+// Read README content
+const readmeContent = fs.readFileSync('README.md', 'utf-8');
+const htmlContent = marked(readmeContent);
+---
+
+<Layout>
+  <main class="container mx-auto px-4 py-8">
+    <div class="w-full md:w-[600px] mx-auto">
+      <article set:html={htmlContent} />
+    </div>
+  </main>
+</Layout>
+
+<style>
+  /* Style code blocks */
+  :global(pre) {
+    background-color: hsl(220, 13%, 18%);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    color: darkgray;
+  }
+
+  /* Style inline code */
+  :global(code) {
+    background-color: hsl(220, 13%, 18%);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    color: hsl(220, 14%, 90%);
+  }
+
+  /* Style headings */
+  :global(h1) {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+  }
+
+  :global(h2) {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  :global(h3) {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Style paragraphs and lists */
+  :global(p) {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  :global(a) {
+    color: blue;
+  }
+
+  :global(ul), :global(ol) {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  :global(li) {
+    margin-bottom: 0.5rem;
+  }
+</style>
+

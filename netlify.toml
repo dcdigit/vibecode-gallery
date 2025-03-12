@@ -1,0 +1,9 @@
+[build]
+  command = "npm run setup && mkdir -p dist/components/artifacts && cp -r src/components/artifacts/* dist/components/artifacts/ && npm run build"
+  publish = "dist"
+
+# Optional: Configure Netlify dev for local testing
+[dev]
+  command = "npm run dev"
+  port = 4321
+  framework = "astro"

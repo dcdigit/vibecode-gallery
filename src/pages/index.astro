@@ -1,0 +1,67 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getAllArtifacts, getArtifactMetadata } from "../utils/artifacts";
+import fs from 'node:fs';
+import ArtifactCard from "../components/ArtifactCard";
+import { siteConfig } from "../config.js";
+
+// Get all artifacts
+const artifactsList = await getAllArtifacts();
+
+// Enhance artifacts with last modified date
+const artifacts = artifactsList.map(artifact => {
+  // Metadata is already included in the artifact from getAllArtifacts()
+  const stats = fs.statSync(artifact.path);
+  return {
+    ...artifact,
+    title: artifact.metadata.title || artifact.name,
+    description: artifact.metadata.description || '',
+    lastModified: stats.mtime
+  };
+});
+
+// Sort artifacts based on config settings
+const sortBy = siteConfig.artifacts.sortBy || "date";
+const sortDirection = siteConfig.artifacts.sortDirection || "desc";
+
+// Define compare function based on sort field
+let compareFunction;
+if (sortBy === "date") {
+  compareFunction = (a, b) => a.lastModified - b.lastModified;
+} else if (sortBy === "name") {
+  compareFunction = (a, b) => a.title.localeCompare(b.title);
+} else if (sortBy === "category") {
+  compareFunction = (a, b) => {
+    const categoryA = a.metadata?.category || "";
+    const categoryB = b.metadata?.category || "";
+    return categoryA.localeCompare(categoryB);
+  };
+}
+
+// Sort artifacts
+const sortedArtifacts = [...artifacts].sort((a, b) => {
+  // Apply the appropriate compare function
+  const result = compareFunction(a, b);
+  // Apply sort direction
+  return sortDirection === "asc" ? result : -result;
+});
+---
+
+<Layout>
+  <main class="container mx-auto px-4 py-8">
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {artifacts.length === 0 ? (
+        <div class="col-span-full bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+          <h2 class="text-lg font-medium text-yellow-700">No artifacts found</h2>
+          <p class="mt-2 text-yellow-600">
+            Add React components to the <code class="bg-yellow-100 px-1 py-0.5 rounded">src/components/artifacts</code> directory to see them here.
+          </p>
+        </div>
+      ) : (
+        sortedArtifacts.map((artifact) => (
+          <ArtifactCard artifact={artifact} />
+        ))
+      )}
+    </div>
+  </main>
+</Layout>
