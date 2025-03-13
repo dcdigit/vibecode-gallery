@@ -1,0 +1,67 @@
+---
+import ArtifactRenderer from '../utils/renderers/ArtifactRenderer.jsx';
+const { artifact } = Astro.props;
+const componentName = artifact.fileName.replace(/\.(jsx|tsx)$/, '');
+const { siteConfig } = await import('../config.js');
+---
+
+<a
+  href={`/artifacts/${artifact.name}`}
+  class="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 h-full"
+>
+  <div class="flex flex-col h-full">
+    {siteConfig.artifacts.showThumbnails && (
+      <div class="preview-container w-full min-h-[200px] bg-gray-50 flex justify-center items-center p-4">
+        <div 
+          class="artifact-content w-[300px] h-[200px]" 
+          style="transform: scale(0.9); transform-origin: center;"
+          data-artifact-name={artifact.fileName}
+        >
+          <ArtifactRenderer client:load componentName={componentName} />
+        </div>
+      </div>
+    )}
+    <div class="p-4 flex flex-col flex-grow">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center flex-grow">
+          <div class="mr-2 p-1.5 rounded-md bg-purple-100">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              class="h-4 w-4 text-purple-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path 
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+          </div>
+          <div class="flex flex-wrap items-baseline">
+            <h2 class="text-lg font-semibold text-gray-800 mr-2">
+              {artifact.metadata?.title || artifact.name}
+            </h2>
+            <span class="text-xs font-medium text-gray-500">
+              {artifact.fileName}
+            </span>
+          </div>
+        </div>
+        {siteConfig.artifacts.showCreationDate && (
+          <div class="text-xs text-gray-500 whitespace-nowrap ml-2">
+            {new Date(artifact.lastModified).toLocaleDateString()}
+          </div>
+        )}
+      </div>
+      
+      {siteConfig.artifacts.showDescription && artifact.metadata?.description && (
+        <p class="text-gray-600 text-sm line-clamp-2 flex-grow">
+          {artifact.metadata.description}
+        </p>
+      )}
+    </div>
+  </div>
+</a>
+

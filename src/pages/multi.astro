@@ -1,0 +1,44 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getAllArtifacts } from '../utils/artifacts';
+import ArtifactRenderer from '../utils/renderers/ArtifactRenderer';
+import { siteConfig } from '../config.js';
+
+// Get all artifacts
+const allArtifacts = getAllArtifacts();
+---
+
+<Layout title={`${siteConfig.title} - All Artifacts Grid`}>
+  <div class="container mx-auto px-4 py-8">
+    <header class="mb-8">
+      <a href="/" class="text-blue-500 hover:text-blue-700 mb-2 inline-block">
+        &larr; Back to all artifacts
+      </a>
+      <h1 class="text-3xl font-bold">All Artifacts Grid View</h1>
+    </header>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {allArtifacts.map((artifact) => {
+        const componentName = artifact.fileName.replace(/\.(jsx|tsx)$/, '');
+        return (
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-2">
+              <h2 class="text-sm font-semibold truncate" title={artifact.metadata.title || artifact.name}>
+                {artifact.metadata.title || artifact.name}
+              </h2>
+            </div>
+            <div 
+              class="artifact-content w-[300px] h-[200px] overflow-hidden" 
+              style="transform-origin: top left; transform: scale(0.9);"
+              data-artifact-name={artifact.fileName}
+            >
+              <ArtifactRenderer client:load componentName={componentName} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</Layout>
+
+

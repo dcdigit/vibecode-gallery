@@ -1,15 +1,32 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getAllArtifacts, getArtifactByFileName, getArtifactPaths, getAdjacentArtifacts } from '../../utils/artifacts';
+import { getAllArtifacts, getArtifactByFileName, getArtifactPaths, getAdjacentArtifacts, getArtifactContent } from '../../utils/artifacts';
 import ArtifactRenderer from '../../utils/renderers/ArtifactRenderer';
 import { siteConfig } from '../../config.js';
 
 export async function getStaticPaths() {
-  return await getArtifactPaths();
+  const paths = await getArtifactPaths();
+  
+  // Add source code to each path's props
+  return paths.map(path => {
+    const { params, props } = path;
+    const { name } = props;
+    
+    // Get the source code during the build phase
+    const sourceCode = getArtifactContent(name) || `// Could not load source code for ${name}`;
+    
+    return {
+      params,
+      props: {
+        ...props,
+        sourceCode
+      }
+    };
+  });
 }
 const { artifact } = Astro.params;
-// Props come directly from getArtifactPaths
-const { fileName, name, path: filePath, metadata } = Astro.props;
+// Props come directly from getStaticPaths with added sourceCode
+const { fileName, name, path: filePath, metadata, sourceCode } = Astro.props;
 
 if (!fileName) {
   return Astro.redirect('/404');
@@ -53,10 +70,81 @@ const { previousArtifact, nextArtifact } = getAdjacentArtifacts(name);
 
     <div class="bg-white rounded-lg shadow-md p-6">
       {/* Render the React component */}
-      <div id="artifact-container" data-artifact-name={fileName}>
+      <div id="artifact-container" class="artifact-content" data-artifact-name={fileName}>
         <ArtifactRenderer client:load componentName={componentName} />
+      </div>
+      
+      <div class="mt-6 flex justify-center">
+        <button id="showCodeBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          <span id="btnText">Show Code</span>
+        </button>
+      </div>
+      
+      <div id="codeViewer" class="mt-6 hidden">
+        <div class="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+          <pre id="codeContent" class="text-gray-100 font-mono text-sm whitespace-pre language-jsx">{sourceCode}</pre>
+        </div>
       </div>
     </div>
   </div>
 </Layout>
 
+<script>
+  // Wait for the DOM to be fully loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    const showCodeBtn = document.getElementById('showCodeBtn');
+    const codeViewer = document.getElementById('codeViewer');
+    const btnText = document.getElementById('btnText');
+    
+    if (showCodeBtn && codeViewer && btnText) {
+      let isCodeVisible = false;
+      
+      // Add click event listener to the button
+      showCodeBtn.addEventListener('click', () => {
+        isCodeVisible = !isCodeVisible;
+        
+        // Toggle the visibility of the code viewer
+        if (isCodeVisible) {
+          codeViewer.classList.remove('hidden');
+          btnText.textContent = 'Hide Code';
+        } else {
+          codeViewer.classList.add('hidden');
+          btnText.textContent = 'Show Code';
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Add styles for code syntax highlighting */
+  #codeViewer {
+    transition: all 0.3s ease;
+  }
+  
+  pre {
+    max-height: 600px;
+    overflow-y: auto;
+    /* Add scrollbar styles */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) rgba(31, 41, 55, 0.8);
+  }
+  
+  pre::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  pre::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.8);
+    border-radius: 4px;
+  }
+  
+  pre::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+  }
+</style>
